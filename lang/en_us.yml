@@ -1,0 +1,15 @@
+multi_rcon_api:
+  broadcast:
+    startup: "say {} started!"
+    stop: "say {server_name} stopped with code {error_code}!"
+  debug:
+    general_help: |
+      ===== §5§lMultiRconAPI §r§6v{version}§r =====
+      §l§4DEBUG MODE! Use following command at your own risk!§r
+      §e[Commands]§r
+      §7{prefix}§r show this message
+      §7{prefix} config§r show the config
+      §7{prefix} run [<-s|-g|> <server|group>] <command>§r run <command> in the given <group> or <server>, default to all
+      §e[Arguments]§r
+      §7-s <server>§r specify the <server> where you want to run your rcon command
+      §7-g <group>§r specify the <group> where you want to run your rcon command

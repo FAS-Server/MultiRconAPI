@@ -1,92 +1,83 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
-from mcdreforged.api.rcon import RconConnection
-from mcdreforged.api.utils import Serializable
 from mcdreforged.api.types import PluginServerInterface, CommandSource
 from mcdreforged.api.decorator import new_thread
-from mcdreforged.api.command import Literal, Text
+from mcdreforged.api.command import Literal, Text, GreedyText
+
+from multi_rcon_api.multi_rcon import Config, MultiRcon
 
 
-class ServerConfig(Serializable):
-    address: str = "localhost"
-    port: int = 25565
-    password: str = "default_password_please_change"
+__instance: Optional[MultiRcon] = None
 
 
-class Config(Serializable):
-    debug: bool = False
-    servers: Dict[str, ServerConfig] = {
-        'Survival': ServerConfig(port=25565),
-        'Mirror': ServerConfig(port=25566),
-        'Creative': ServerConfig(port=25567)
-    }
-
-    groups: Dict[str, List[str]] = {}
+def tr(server: PluginServerInterface, translation_key: str, *args, **kwargs):
+    return PluginServerInterface.tr(server, f'multi_rcon_api.{translation_key}', *args, **kwargs)
 
 
-class Rcon(RconConnection):
-    def __init__(self, config: ServerConfig):
-        super().__init__(**config.serialize())
+def rtr(server: PluginServerInterface, translation_key: str, *args, **kwargs):
+    return PluginServerInterface.rtr(server, f'multi_rcon_api.{translation_key}', *args, **kwargs)
 
 
-class MultiRcon:
-    def __init__(self, server: PluginServerInterface):
-        self.config = server.load_config_simple(target_class=Config)
-
-    def get_servers(self, group: Optional[str] = None):
-        if group is None:
-            return self.config.servers.keys()
-
-        elif group in self.config.groups:
-            return self.config.groups.get(group)
-
-        else:
-            raise TypeError(f'The group {group} is not in list')
-
-    def group_command(self, command, group: Optional[str] = None):
-        target_servers = self.get_servers(group)
-        ret: dict = {}
-        for server in target_servers:
-            ret_unit = {}
-            try:
-                session = Rcon(self.config.servers.get(server))
-                ret_unit['connected'] = session.connect()
-                data = session.send_command(command)
-                if ret_unit['connected'] and data:
-                    ret_unit['data'] = data
-                else:
-                    ret_unit['data'] = ''
-            except:
-                ret_unit = {}
-            ret[server] = ret_unit
-        return ret
-
-
-
-multi_rcon_instance: Optional[MultiRcon] = None
-
-
-@new_thread()
-def send_multi_command(command: str, group: Optional[str] = None, src: Optional[CommandSource] = None):
-    if multi_rcon_instance:
-        ret = multi_rcon_instance.group_command(command, group)
-        if src:
-            src.reply(str(ret))
-        return ret
+@new_thread("multi_rcon_api:multi_command")
+def send_multi_command(src: CommandSource, command: str, group: Optional[str] = None):
+    if __instance:
+        ret = __instance.group_command(command, group)
+        src.reply(str(ret))
     else:
         raise RuntimeWarning('Cannot send command before init!')
 
 
+@new_thread("multi_rcon_api:single_command")
+def send_single_command(src: CommandSource, command: str, server: str):
+    if __instance:
+        ret = __instance.single_command(command, server)
+        src.reply(ret)
+    else:
+        raise RuntimeWarning('Cannot send command before init!')
+
+
+def register_debug_command(server: PluginServerInterface, config: Config):
+    meta = server.get_self_metadata()
+    general_help = rtr(server, 'debug.general_help', prefix='!!rcon', version=meta.version)
+
+    debug_node = Literal('!!rcon').requires(lambda src: src.has_permission(2)).runs(
+        lambda src: src.reply(general_help)).then(
+        Literal({'config', 'cfg'}).runs(lambda src: src.reply(str(config.serialize())))
+    ).then(
+        Literal('run').then(
+            Literal('-s').then(Text('server')).then(GreedyText('cmd')).runs(
+                lambda src, ctx: send_single_command(src, ctx['cmd'], ctx['server']))
+        ).then(
+            Literal('-g').then(Text('group').then(GreedyText('cmd'))).runs(
+                lambda src, ctx: send_multi_command(src, ctx['cmd'], ctx['group']))
+        ).then(GreedyText('cmd').runs(lambda src, ctx: send_multi_command(src, ctx['cmd'])))
+    )
+    server.register_command(debug_node)
+
+
 def on_load(server: PluginServerInterface, old):
-    global multi_rcon_instance
-    multi_rcon_instance = MultiRcon(server)
-    config = multi_rcon_instance.config
+    global __instance
+    if hasattr(old, '__instance'):
+        __instance = old.__instance
+    else:
+        __instance = MultiRcon(server)
+    __instance.reload()
+    config = __instance.config
     if config.debug:
-        server.register_command(
-            Literal('!!rcon').requires(lambda src: src.has_permission(2)).runs(lambda src: src.reply(str(config.serialize())))
-            .then(
-                Text('cmd').runs(lambda src, ctx: send_multi_command(ctx['cmd'], src=src)).then(
-                    Text('group').runs(lambda src, ctx: send_multi_command(ctx['cmd'], ctx['group'], src))
-                )
-            )
-        )
+        register_debug_command(server, config)
+
+
+@new_thread('multi_rcon_api#broadcast_startup')
+def on_server_startup(server: PluginServerInterface):
+    config = __instance.config
+    if config.Broadcast.startup:
+        msg = tr(server, 'broadcast.startup', config.self_server)
+        __instance.group_command(msg)
+
+
+@new_thread('multi_rcon_api#broadcast_stop')
+def on_server_stop(server: PluginServerInterface, code: int):
+    config = __instance.config
+    if config.Broadcast.stop:
+        msg = tr(server, 'broadcast.stop', server_name=config.self_server, error_code=code)
+        __instance.group_command(msg)

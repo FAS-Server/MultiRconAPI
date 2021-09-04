@@ -1,0 +1,15 @@
+multi_rcon_api:
+  broadcast:
+    startup: "say {} 成功启动!"
+    stop: "say {server_name} 已经关闭, 错误代码 {error_code}!"
+  debug:
+    general_help: |
+      ===== §5§lMultiRconAPI §r§6v{version}§r =====
+      §l§4调试模式! 输入指令时请自行承担风险!§r
+      §e[命令]§r
+      §7{prefix}§r 显示这条信息
+      §7{prefix} config§r 展示插件配置
+      §7{prefix} run [<-s|-g> <服务器|群组>] <指令>§r 在给定的 <服务器> 或 <群组> 中执行 <指令>, 默认为所有服务器
+      §e[参数]§r
+      §7-s <服务器>§r 指定你想要执行 rcon 命令的 <服务器>
+      §7-g <群组>§r 指定你想要执行 RCON 命令的 <群组>
