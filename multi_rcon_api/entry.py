@@ -45,11 +45,11 @@ def register_debug_command(server: PluginServerInterface, config: Config):
         Literal({'config', 'cfg'}).runs(lambda src: src.reply(str(config.serialize())))
     ).then(
         Literal('run').then(
-            Literal('-s').then(Text('server')).then(GreedyText('cmd')).runs(
-                lambda src, ctx: send_single_command(src, ctx['cmd'], ctx['server']))
-        ).then(
-            Literal('-g').then(Text('group').then(GreedyText('cmd'))).runs(
-                lambda src, ctx: send_multi_command(src, ctx['cmd'], ctx['group']))
+            Literal('-s').then(Text('server').then(GreedyText('cmd').runs(
+                lambda src, ctx: send_single_command(src, ctx['cmd'], ctx['server'])))
+        )).then(
+            Literal('-g').then(Text('group').then(GreedyText('cmd').runs(
+                lambda src, ctx: send_multi_command(src, ctx['cmd'], ctx['group']))))
         ).then(GreedyText('cmd').runs(lambda src, ctx: send_multi_command(src, ctx['cmd'])))
     )
     server.register_command(debug_node)
