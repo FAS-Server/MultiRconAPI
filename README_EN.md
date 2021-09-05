@@ -1,26 +1,25 @@
 # Multi Rcon API
 
-[English](./README_EN.md) | 简体中文
+English| [简体中文](./README.md)
 
 
-一个使用rcon来做到对群组服进行简单操作的api
+An api to make it easier to control group server by rcon
 
-
-## 依赖
+## Dependencies
 
 MCDReforged: >=2.1.2
 
-## 配置
+## Config
 
-`broadcast `: 是否将特定事件通过rcon进行广播, 其中 `startup`为服务器启动事件,  `stop` 为服务器关闭事件
+ `broadcast `: Whether to broadcast startup and stop event through rcon
 
-`servers` : 存储群组服务器中所有的rcon信息, 键为服务器名, 建议与跨服中的名称保持一致；值为rcon的 地址/端口/ 密码 等信息
+`servers` : The rcon info of all the group servers, key for server name, suggested to set as the same in the Velocity/BungeeCord, value for rcon info
 
-`self_server`: 存储此子服务器名称, 用于在通过rcon广播事件时作为标识
+`self_server`: The server name of current sub-server, used in broadcast for identification.
 
-`groups`: 存储自定义服务器分组信息
+`groups`: The custom server group
 
-示例配置文件如下:
+Example config file are as follow:
 
 ```json
 {
