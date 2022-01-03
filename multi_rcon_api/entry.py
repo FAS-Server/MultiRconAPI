@@ -59,12 +59,17 @@ def on_load(server: PluginServerInterface, old):
     global __instance
     if hasattr(old, '__instance'):
         __instance = old.__instance
+        __instance.reload()
     else:
         __instance = MultiRcon(server)
-    __instance.reload()
     config = __instance.config
     if config.debug:
         register_debug_command(server, config)
+
+
+def on_unload(server: PluginServerInterface):
+    if __instance:
+        __instance.clear()
 
 
 @new_thread('multi_rcon_api#broadcast_startup')

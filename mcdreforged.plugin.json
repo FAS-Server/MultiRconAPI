@@ -1,7 +1,7 @@
 {
     "id": "multi_rcon_api",
     "name": "MultiRconAPI",
-    "version": "1.0.0",
+    "version": "1.1.0-beta1",
     "link": "https://github.com/FAS-Server/MultiRconAPI",
     "author": [
         "YehowahLiu"

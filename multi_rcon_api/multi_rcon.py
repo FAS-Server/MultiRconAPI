@@ -39,25 +39,32 @@ class MultiRcon:
 
     def __init__(self, server: PluginServerInterface):
         self.__server = server
+        self.rcons: Dict[str, Rcon] = {}  # for holding up the rcon connections
         self.config: Optional[Config] = None
         self.reload()
 
     def reload(self):
+        self.clear()
         self.config = self.__server.load_config_simple(target_class=Config)
+        for server_name in self.config.servers:
+            rcon_instance = Rcon(self.config.servers.get(server_name))
+            self.rcons[server_name] = rcon_instance
+            rcon_instance.connect()
 
-
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # for singleton instance
         if not cls.__instance:
             with cls.__instance_lock:
                 if not cls.__instance:
                     cls.__instance = object.__new__(cls)
         return cls.__instance
 
+    def clear(self):
+        for server_name in self.rcons:
+            self.rcons.pop(server_name)
 
     @classmethod
     def get_instance(cls):
         return cls.__instance
-
 
     def get_servers(self, group: Optional[str] = None):
         if group is None:
@@ -80,18 +87,7 @@ class MultiRcon:
     def single_command(self, command: str, server: str):
         self.check_new_thread()
         if server in self.config.servers:
-            ret_unit = {}
-            try:
-                session = Rcon(self.config.servers.get(server))
-                ret_unit['connected'] = session.connect()
-                data = session.send_command(command)
-                if ret_unit['connected'] and data:
-                    ret_unit['data'] = data
-                else:
-                    ret_unit['data'] = ''
-            except:
-                ret_unit = {'connected': False, 'data': {}}
-            return ret_unit
+            return self.rcons.get(server).send_command(command, max_retry_time=5)
         else:
             return 'No Such Server in Config'
 
