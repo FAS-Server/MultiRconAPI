@@ -16,5 +16,6 @@
     "entrypoint": "multi_rcon_api.entry",
     "resources": [
         "lang"
-    ]
+    ],
+    "archive_name": "MultiRconAPI-V{version}.pyz"
 }
