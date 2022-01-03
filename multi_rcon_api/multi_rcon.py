@@ -13,7 +13,6 @@ class ServerConfig(Serializable):
 
 
 class Config(Serializable):
-
     class Broadcast:
         startup: bool = True
         stop: bool = True
@@ -98,4 +97,4 @@ class MultiRcon:
 
     def check_new_thread(self):
         if self.__server.is_on_executor_thread():
-            raise RuntimeError('Should run in an new thread!')
+            raise RuntimeError('Should run in new thread!')
