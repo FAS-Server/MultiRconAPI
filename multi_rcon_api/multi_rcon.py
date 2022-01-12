@@ -49,7 +49,10 @@ class MultiRcon:
         for server_name in self.config.servers:
             rcon_instance = Rcon(self.config.servers.get(server_name))
             self.rcons[server_name] = rcon_instance
-            rcon_instance.connect()
+            try:
+                rcon_instance.connect()
+            except ConnectionRefusedError:
+                self.__server.logger.info(f"Can't connect to {server_name}")
 
     def __new__(cls, *args, **kwargs):  # for singleton instance
         if not cls.__instance:
