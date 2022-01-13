@@ -90,9 +90,14 @@ class MultiRcon:
     def single_command(self, command: str, server: str):
         self.check_new_thread()
         if server in self.config.servers:
-            return self.rcons.get(server).send_command(command, max_retry_time=5)
+            rcon = self.rcons.get(server)
+            if rcon is None:
+                rcon = Rcon(self.config.servers.get(server))
+                self.rcons[server] = rcon
+            payload = rcon.send_command(command, max_retry_time=5)
+            return {'connected': rcon.socket is not None and payload is not None, 'data': payload}
         else:
-            return 'No Such Server in Config'
+            return {'connected': False, 'data': 'No Such Server in Config'}
 
     def check_new_thread(self):
         if self.__server.is_on_executor_thread():
