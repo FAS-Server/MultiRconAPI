@@ -2,19 +2,19 @@
 
 ![MCDReforged](https://img.shields.io/badge/dynamic/json?label=MCDReforged&query=dependencies.mcdreforged&url=https%3A%2F%2Fraw.githubusercontent.com%2FFAS-Server%2FMultiRconAPI%2Fmaster%2Fmcdreforged.plugin.json&style=plastic) ![license](https://img.shields.io/github/license/FAS-Server/MultiRconAPI?style=plastic) ![build status](https://img.shields.io/github/workflow/status/FAS-Server/MultiRconAPI/CI%20for%20MCDR%20Plugin?label=build&style=plastic) ![Release](https://img.shields.io/github/v/release/FAS-Server/MultiRconAPI?style=plastic) ![total download](https://img.shields.io/github/downloads/FAS-Server/MultiRconAPI/total?label=total%20download&style=plastic)
 
-[English](./README_EN.md) | 简体中文
+[English](README_EN.md) | 简体中文
 
 一个使用rcon来做到对群组服进行简单操作的api
 
 ## 配置
 
-`broadcast `: 是否将特定事件通过rcon进行广播, 其中 `startup`为服务器启动事件,  `stop` 为服务器关闭事件
+1. 配置文件
 
-`servers` : 存储群组服务器中所有的rcon信息, 键为服务器名, 建议与跨服中的名称保持一致；值为rcon的 地址/端口/ 密码 等信息
+`broadcast `: 是否将特定事件通过rcon进行广播, 其中 `startup`为服务器启动事件,  `stop` 为服务器关闭事件
 
 `self_server`: 存储此子服务器名称, 用于在通过rcon广播事件时作为标识
 
-`groups`: 存储自定义服务器分组信息
+`data_file`: 数据文件存放的地址
 
 示例配置文件如下:
 
@@ -24,6 +24,21 @@
         "startup": true,
         "stop": false
     },
+    "self_server": "Survival",
+    "data_file": "config/MultiRconAPI_ServerList.json"
+}
+```
+
+2. 数据文件
+
+`servers` : 存储群组服务器中所有的rcon信息, 键为服务器名, 建议与跨服中的名称保持一致；值为rcon的 地址/端口/ 密码 等信息
+
+`groups`: 存储自定义服务器分组信息
+
+示例数据文件如下:
+
+```json
+{
     "servers": {
         "Survival": {
             "address": "localhost",
@@ -41,10 +56,8 @@
             "password": "default_password_please_change"
         }
     },
-    "self_server": "Survival",
     "groups": {
         "g_creative": ["Creative", "Mirror"]
     }
 }
 ```
-
