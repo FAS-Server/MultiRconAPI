@@ -12,20 +12,22 @@ class ServerConfig(Serializable):
     password: str = "default_password_please_change"
 
 
-class Config(Serializable):
-    class Broadcast:
-        startup: bool = True
-        stop: bool = True
-    debug: bool = False
+class ServerList(Serializable):
     servers: Dict[str, ServerConfig] = {
         'Survival': ServerConfig(port=25565),
         'Mirror': ServerConfig(port=25566),
         'Creative': ServerConfig(port=25567)
     }
-
-    self_server: str = 'Survival'
-
     groups: Dict[str, List[str]] = {}
+
+
+class Config(Serializable):
+    class Broadcast:
+        startup: bool = True
+        stop: bool = True
+    debug: bool = False
+    data_file: str = "config/MultiRconAPI_ServerList.json"
+    self_server: str = 'Survival'
 
 
 class Rcon(RconConnection):
@@ -41,13 +43,16 @@ class MultiRcon:
         self.__server = server
         self.rcons: Dict[str, Rcon] = {}  # for holding up the rcon connections
         self.config: Optional[Config] = None
+        self.server_data: Optional[ServerList] = None
         self.reload()
 
     def reload(self):
         self.clear()
         self.config = self.__server.load_config_simple(target_class=Config)
-        for server_name in self.config.servers:
-            rcon_instance = Rcon(self.config.servers.get(server_name))
+        self.server_data = self.__server.load_config_simple(
+            file_name=self.config.data_file, in_data_folder=False, target_class=ServerList)
+        for server_name in self.server_data.servers:
+            rcon_instance = Rcon(self.server_data.servers.get(server_name))
             self.rcons[server_name] = rcon_instance
             try:
                 rcon_instance.connect()
@@ -71,10 +76,10 @@ class MultiRcon:
 
     def get_servers(self, group: Optional[str] = None):
         if group is None:
-            return self.config.servers.keys()
+            return self.server_data.servers.keys()
 
-        elif group in self.config.groups:
-            return self.config.groups.get(group)
+        elif group in self.server_data.groups:
+            return self.server_data.groups.get(group)
 
         else:
             raise RuntimeWarning('No such group')
@@ -89,10 +94,10 @@ class MultiRcon:
 
     def single_command(self, command: str, server: str):
         self.check_new_thread()
-        if server in self.config.servers:
+        if server in self.server_data.servers:
             rcon = self.rcons.get(server)
             if rcon is None:
-                rcon = Rcon(self.config.servers.get(server))
+                rcon = Rcon(self.server_data.servers.get(server))
                 self.rcons[server] = rcon
             payload = rcon.send_command(command, max_retry_time=5)
             return {'connected': rcon.socket is not None and payload is not None, 'data': payload}

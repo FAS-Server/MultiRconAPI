@@ -57,11 +57,7 @@ def register_debug_command(server: PluginServerInterface, config: Config):
 
 def on_load(server: PluginServerInterface, old):
     global __instance
-    if hasattr(old, '__instance'):
-        __instance = old.__instance
-        __instance.reload()
-    else:
-        __instance = MultiRcon(server)
+    __instance = MultiRcon(server)
     config = __instance.config
     if config.debug:
         register_debug_command(server, config)
