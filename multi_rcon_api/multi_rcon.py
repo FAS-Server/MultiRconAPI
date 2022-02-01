@@ -1,6 +1,7 @@
 from threading import Lock
 from typing import Dict, List, Optional
 
+from mcdreforged.api.decorator import new_thread
 from mcdreforged.api.utils import Serializable
 from mcdreforged.api.rcon import RconConnection
 from mcdreforged.api.types import PluginServerInterface
@@ -46,6 +47,7 @@ class MultiRcon:
         self.server_data: Optional[ServerList] = None
         self.reload()
 
+    @new_thread("MultRconAPI#reload")
     def reload(self):
         self.clear()
         self.config = self.__server.load_config_simple(target_class=Config)
