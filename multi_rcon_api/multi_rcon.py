@@ -1,3 +1,4 @@
+import struct
 from threading import Lock
 from typing import Dict, List, Optional
 
@@ -35,6 +36,22 @@ class Rcon(RconConnection):
     def __init__(self, config: ServerConfig):
         super().__init__(**config.serialize())
 
+    def safe_connect(self) -> bool:
+        try:
+            return self.connect()
+        except struct.error:
+            self.socket = None
+            return False
+
+    def safe_command(self, command: str, max_retry_time: int = 5) -> Optional[str]:
+        if max_retry_time <= 0:
+            return
+        elif self.socket is None:
+            self.safe_connect()
+            return self.safe_command(command, max_retry_time - 1)
+        else:
+            return self.send_command(command=command, max_retry_time=1)
+
 
 class MultiRcon:
     __instance_lock = Lock()
@@ -57,7 +74,7 @@ class MultiRcon:
             rcon_instance = Rcon(self.server_data.servers.get(server_name))
             self.rcons[server_name] = rcon_instance
             try:
-                rcon_instance.connect()
+                rcon_instance.safe_connect()
             except ConnectionRefusedError:
                 self.__server.logger.info(f"Can't connect to {server_name}")
 
@@ -101,7 +118,7 @@ class MultiRcon:
             if rcon is None:
                 rcon = Rcon(self.server_data.servers.get(server))
                 self.rcons[server] = rcon
-            payload = rcon.send_command(command, max_retry_time=5)
+            payload = rcon.safe_command(command)
             return {'connected': rcon.socket is not None and payload is not None, 'data': payload}
         else:
             return {'connected': False, 'data': 'No Such Server in Config'}
