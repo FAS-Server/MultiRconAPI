@@ -60,7 +60,7 @@ class MultiRcon:
     def __init__(self, server: PluginServerInterface):
         self.__server = server
         self.rcons: Dict[str, Rcon] = {}  # for holding up the rcon connections
-        self.config: Optional[Config] = None
+        self.config: Optional[Config] = self.__server.load_config_simple(target_class=Config)
         self.server_data: Optional[ServerList] = None
         self.reload()
 
@@ -86,7 +86,8 @@ class MultiRcon:
         return cls.__instance
 
     def clear(self):
-        for server_name in self.rcons:
+        server_list = [i for i in self.rcons]
+        for server_name in server_list:
             self.rcons.pop(server_name)
 
     @classmethod
