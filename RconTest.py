@@ -1,4 +1,5 @@
-from multi_rcon_api.multi_rcon import Rcon, ServerConfig
+from multi_rcon_api.multi_rcon import Rcon
+from multi_rcon_api.configs import ServerConfig
 
 rcon: Rcon
 try:

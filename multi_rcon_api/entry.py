@@ -4,8 +4,8 @@ from mcdreforged.api.types import PluginServerInterface, CommandSource
 from mcdreforged.api.decorator import new_thread
 from mcdreforged.api.command import Literal, Text, GreedyText
 
-from multi_rcon_api.multi_rcon import Config, MultiRcon
-
+from multi_rcon_api.multi_rcon import MultiRcon
+from multi_rcon_api.configs import Config
 
 __instance: Optional[MultiRcon] = None
 
